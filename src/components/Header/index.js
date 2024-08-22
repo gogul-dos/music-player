@@ -14,8 +14,7 @@ class Header extends Component {
     success: "success",
     failure: "failure",
   };
-  audioPlayerRef = null;
-  intervalId = null;
+
   state = {
     currentTab: "foryou",
     songs: [],
@@ -94,9 +93,11 @@ class Header extends Component {
   setCurrentSong = (id) => {
     const { songs } = this.state;
     const song = songs.find((son) => son.id === id);
-    this.setState({ currentSong: song, songPlaying: true }, () =>
-      this.audioPlayerRef.play()
-    );
+    this.setState({ currentSong: song, songPlaying: true }, () => {
+      if (this.audioPlayerRef) {
+        this.audioPlayerRef.play();
+      }
+    });
   };
 
   fetchSongs = async () => {
@@ -130,7 +131,14 @@ class Header extends Component {
   };
 
   statusOfApi = () => {
-    const { currentStatus, filteredSongs, currentTab } = this.state;
+    const {
+      currentStatus,
+      filteredSongs,
+      currentTab,
+      currentSong,
+      songPlaying,
+    } = this.state;
+
     switch (currentStatus) {
       case this.apiStatus.progress:
         return (
@@ -165,8 +173,14 @@ class Header extends Component {
                     className="each-song-overall-container"
                     key={song.id}
                     onClick={() => this.setCurrentSong(song.id)}
+                    style={{
+                      backgroundColor:
+                        currentSong.id === song.id ? "#ffffff" : "transparent",
+                      opacity: currentSong.id === song.id ? "0.4" : "1",
+                      color: currentSong.id === song.id ? "black" : "white",
+                    }}
                   >
-                    <div className="each-song">
+                    <div className="each-song" style={{ opacity: "2" }}>
                       <img
                         className="songs-list-cover"
                         alt={`song${song.id}`}
@@ -177,6 +191,17 @@ class Header extends Component {
                         <p>{song.artist}</p>
                       </div>
                     </div>
+                    {song.id === currentSong.id && songPlaying === true ? (
+                      <Audio
+                        height="50"
+                        width="80"
+                        color="#4fa94d"
+                        ariaLabel="audio-loading"
+                        visible={true}
+                      />
+                    ) : (
+                      <></>
+                    )}
                     <p>{song.duration}</p>
                   </button>
                 ))
@@ -200,9 +225,8 @@ class Header extends Component {
     if (currentSong.id !== firstId) {
       const targetSong = currentSong.id - 1;
       const newSong = filteredSongs.find((song) => song.id === targetSong);
-      this.setState(
-        { currentSong: newSong, songPlaying: true },
-        () => this.audioPlayerRef.play() // Automatically play the new song
+      this.setState({ currentSong: newSong, songPlaying: true }, () =>
+        this.audioPlayerRef.play()
       );
     }
   };
@@ -384,10 +408,10 @@ class Header extends Component {
   };
 
   generateMobileView = () => {
-    const { currentTab, isSong } = this.state;
+    const { currentTab } = this.state;
     const activeForYou = currentTab === "foryou" ? "active-style" : "";
     const activeTopTracks = currentTab === "toptracks" ? "active-style" : "";
-    return isSong ? (
+    return (
       <div className="songs-list-container-2">
         <button
           className={`link-button ${activeForYou}`}
@@ -403,16 +427,21 @@ class Header extends Component {
         </button>
         {this.statusOfApi()}
       </div>
-    ) : (
-      <div className="current-song-container-2">{this.songApiStatus()}</div>
     );
   };
 
   render() {
-    const { currentTab, currentSong } = this.state;
+    const { currentTab, currentSong, isSong } = this.state;
     const activeForYou = currentTab === "foryou" ? "active-style" : "";
     const activeTopTracks = currentTab === "toptracks" ? "active-style" : "";
     const backgroundcolor = currentSong ? `${currentSong["accent"]}` : "black";
+    const isPortrait = window.matchMedia("(orientation: portrait)").matches;
+    const stylesForSong = isPortrait
+      ? "current-song-container-2"
+      : "current-song-container-1";
+    const styleForContainer = isPortrait
+      ? "songs-list-container-2"
+      : "songs-list-container-1";
 
     return (
       <div
@@ -438,23 +467,33 @@ class Header extends Component {
             Show List/Show Song
           </button>{" "}
         </div>
-        <div className="songs-list-container-1">
-          <button
-            className={`link-button ${activeForYou}`}
-            onClick={() => this.setTab("foryou")}
-          >
-            <Link className="link-elements">For You</Link>
-          </button>
-          <button
-            className={`link-button ${activeTopTracks}`}
-            onClick={() => this.setTab("toptracks")}
-          >
-            <Link className="link-elements">Top Tracks</Link>
-          </button>
-          {this.statusOfApi()}
+        {!isPortrait || (!isSong && isPortrait) ? (
+          <div className={styleForContainer}>
+            <button
+              className={`link-button ${activeForYou}`}
+              onClick={() => this.setTab("foryou")}
+            >
+              <Link className="link-elements">For You</Link>
+            </button>
+            <button
+              className={`link-button ${activeTopTracks}`}
+              onClick={() => this.setTab("toptracks")}
+            >
+              <Link className="link-elements">Top Tracks</Link>
+            </button>
+            {this.statusOfApi()}
+          </div>
+        ) : (
+          ""
+        )}
+        <div
+          style={{
+            display: !isPortrait || (isSong && isPortrait) ? "block" : "none",
+          }}
+          className={stylesForSong}
+        >
+          {this.songApiStatus()}
         </div>
-        <div className="current-song-container-1">{this.songApiStatus()}</div>
-        {this.generateMobileView()}
       </div>
     );
   }

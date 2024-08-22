@@ -60,9 +60,10 @@
   border-radius: 20px;
 }
 .each-song {
-  margin-top: 15px;
+  margin: 15px;
   display: flex;
   align-items: center;
+  font-weight: bold;
 }
 .song-details {
   padding: 0;
@@ -77,6 +78,7 @@
   background-color: transparent;
   margin-bottom: 15px;
   border-width: 0;
+  border-radius: 15px;
   cursor: pointer;
 }
 .current-song-container-1 {
