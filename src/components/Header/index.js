@@ -229,8 +229,33 @@ class Header extends Component {
     });
   };
 
+  handleTimeChange = (event) => {
+    const newTime = parseFloat(event.target.value);
+    if (this.audioPlayerRef) {
+      this.audioPlayerRef.currentTime = newTime;
+      this.setState({ currentTime: newTime });
+    }
+  };
+
+  onTimeUpdate = () => {
+    if (this.audioPlayerRef) {
+      this.setState({ currentTime: this.audioPlayerRef.currentTime });
+    }
+  };
+
+  calculateTime = (time) => {
+    const mins = Math.floor(time / 60);
+    const secs = Math.floor(time % 60);
+    return `${mins}:${secs < 10 ? `0${secs}` : secs}`;
+  };
+
+  handleSongEnd = () => {
+    this.changeNextSong();
+  };
+
   songApiStatus = () => {
-    const { currentSong, songPlaying, volume } = this.state;
+    const { currentSong, songPlaying, volume, currentTime, duration } =
+      this.state;
     return currentSong ? (
       <>
         <h1>{currentSong.name}</h1>
@@ -243,10 +268,31 @@ class Header extends Component {
 
         <audio
           ref={(ref) => (this.audioPlayerRef = ref)}
-          src={currentSong ? currentSong.url : ""}
-          volume={volume}
+          src={this.state.currentSong ? this.state.currentSong.url : ""}
+          volume={this.state.volume}
           hidden
+          onLoadedMetadata={(e) =>
+            this.setState({ duration: e.target.duration })
+          }
+          onTimeUpdate={this.onTimeUpdate}
+          onEnded={this.handleSongEnd}
         />
+
+        <div>
+          <input
+            type="range"
+            min="0"
+            max={this.state.duration || 0}
+            step="0.1"
+            value={this.state.currentTime}
+            onChange={this.handleTimeChange}
+            className="time-slider"
+          />
+        </div>
+        <div className="timer-para-container">
+          <p>{this.calculateTime(currentTime)}</p>
+          <p>{this.calculateTime(duration)}</p>
+        </div>
 
         <div className="all-music-controls">
           <button className="control-button-element">
